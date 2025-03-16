@@ -237,16 +237,22 @@ class Player2(Player):
         Bullet('player2', self.game, position, direction)
 
     def collide_with_bullet(self):
-        for bullet in self.game.bullets:
-            if bullet.rect.colliderect(self.hit_rect):
-                if bullet.type != 'player2':
-                    GameStatistics.death_time_player2 = 0
-                    GameStatistics.number_kill_player1 += 1
-                    shoot_sound.play()
-                    Explosion(self.game, bullet.rect.center)
-                    bullet.kill()
-                    self.kill()
+     for bullet in self.game.bullets:
+        if bullet.rect.colliderect(self.hit_rect):
+            if bullet.type != 'player2':
+                GameStatistics.death_time_player2 = 0
+                GameStatistics.number_kill_player1 += 1
+                shoot_sound.play()
+                Explosion(self.game, bullet.rect.center)
+                bullet.kill()
+                
+                # Kiểm tra trước khi xóa khỏi danh sách
+                if self in PLAYER:
                     PLAYER.remove(self)
+                
+                self.kill()  # Gọi kill() sau khi đã remove
+                break  # Thoát vòng lặp sau khi xử lý va chạm
+
 # -----------------------------------------------------------------------------------
 
 
@@ -404,16 +410,21 @@ class enemy(pygame.sprite.Sprite): # class enemy
                 GameStatistics.death_time_enemy = 0
 
     def collide_with_bullet(self):
-        for bullet in self.game.bullets:
-            if bullet.rect.colliderect(self.rect):
-                if bullet.type != 'enemy':
-                    GameStatistics.death_time_enemy = 0
-                    GameStatistics.number_kill_player1 += 1
-                    shoot_sound.play()
-                    Explosion(self.game, bullet.rect.center)
-                    bullet.kill()
-                    self.kill()
+     for bullet in self.game.bullets:
+        if bullet.rect.colliderect(self.rect):
+            if bullet.type != 'enemy':
+                GameStatistics.death_time_enemy = 0
+                GameStatistics.number_kill_player1 += 1
+                shoot_sound.play()
+                Explosion(self.game, bullet.rect.center)
+                bullet.kill()
+                
+                # Kiểm tra trước khi xóa khỏi PLAYER để tránh lỗi
+                if self in PLAYER:
                     PLAYER.remove(self)
+                
+                self.kill()  # Xóa đối tượng khỏi nhóm sprite trong Pygame
+                return  # Thoát khỏi hàm ngay sau khi xử lý va chạm
 
     def update(self):
         self.collide_with_player()
@@ -439,13 +450,14 @@ class TankEnemy(enemy): # class TankEnemy
         super().ability()
         self.shoot()
 
-class Zombie(enemy): # class Zombie
+class Zombie(enemy):  
     def __init__(self, game, x, y):
         super().__init__(game, x, y, getImage(ZOMBIE_IMAGE, WHITE))
 
-    def collide_with_bullet(self):
+    def collide_with_bullet(self):  # Xử lý va chạm đạn và zombie
         for bullet in self.game.bullets:
             if bullet.rect.colliderect(self.hit_rect):
+                zombie_hit_sound.play()  # Phát âm thanh khi trúng zombie
                 bullet.kill()
                 Explosion(self.game, bullet.rect.center)
                 self.kill()

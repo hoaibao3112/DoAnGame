@@ -74,8 +74,12 @@ sound_folder = path.join(path.dirname(__file__), 'sounds')
 
 # Load sounds
 shoot_sound = pygame.mixer.Sound(path.join(sound_folder, 'TiengSung.wav'))  # Shooting sound
+# Âm thanh khi bắn trúng Zombie
+zombie_hit_sound = pygame.mixer.Sound(path.join(sound_folder, 'VuNo.wav'))
+zombie_hit_sound.set_volume(0.5)  # Điều chỉnh âm lượng
 
 # Adjust volume if needed
 shoot_sound.set_volume(0.5)
-
+bg_music = pygame.mixer.Sound(path.join(sound_folder, 'NhacNen.wav'))
+bg_music.set_volume(0.3)  # Điều chỉnh âm lượng
 
