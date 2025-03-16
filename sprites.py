@@ -5,7 +5,8 @@ from astar import a_star
 from auto_target import AutoTargeting
 from setting import *
 from sprites import *
-
+from setting import shoot_sound 
+ # Import âm thanh nổ
 vector = pygame.math.Vector2  # tạo biến vector2
 
 PLAYER = []
@@ -112,7 +113,19 @@ class Player(pygame.sprite.Sprite):
         self.change_rot()
         self.shoot()
         self.move()
+        
+def shoot(self):  # Hàm bắn đạn
+        if self.is_shoot:
+            self.last_fire += self.game.changing_time
+            if self.last_fire > GameStatistics.bulletRate:
+                self.last_fire = 0
+                direction = vector(0, 1).rotate(-self.rot).normalize()
+                position = self.position + turret.rotate(-self.rot)
 
+                # Chơi âm thanh bắn đạn
+                shoot_sound.play()
+
+                self.respawn_bullet(direction, position)
 
 # -----------------------------------------------------------------------------------
 class Player1(Player):
@@ -173,10 +186,11 @@ class Player1(Player):
                 if bullet.type != 'player1':
                     GameStatistics.death_time_player1 = 0
                     GameStatistics.number_kill_player2 += 1
-                    Explosion(self.game, bullet.rect.center)  # khởi tạo vụ nổ
+                    shoot_sound.play()
+                    Explosion(self.game, bullet.rect.center)
                     bullet.kill()
                     self.kill()
-                    PLAYER.remove(self)  # remove chính nó khỏi list PLAYER
+                    PLAYER.remove(self)
 
     def update(self): # hàm update của sprite
         self.collide_with_player()
@@ -228,11 +242,11 @@ class Player2(Player):
                 if bullet.type != 'player2':
                     GameStatistics.death_time_player2 = 0
                     GameStatistics.number_kill_player1 += 1
+                    shoot_sound.play()
                     Explosion(self.game, bullet.rect.center)
                     bullet.kill()
                     self.kill()
                     PLAYER.remove(self)
-
 # -----------------------------------------------------------------------------------
 
 
@@ -251,6 +265,7 @@ class Bullet(pygame.sprite.Sprite):
     def collide_with_walls(self):  # đạn va chạm với tường sẽ tạo ra vụ nổ
         hits = pygame.sprite.spritecollide(self, self.game.walls, False)
         if hits:
+            shoot_sound.play()
             Explosion(self.game, self.position)
             self.kill()
 
@@ -394,10 +409,11 @@ class enemy(pygame.sprite.Sprite): # class enemy
                 if bullet.type != 'enemy':
                     GameStatistics.death_time_enemy = 0
                     GameStatistics.number_kill_player1 += 1
+                    shoot_sound.play()
                     Explosion(self.game, bullet.rect.center)
                     bullet.kill()
                     self.kill()
-                    ENEMY.remove(self)
+                    PLAYER.remove(self)
 
     def update(self):
         self.collide_with_player()

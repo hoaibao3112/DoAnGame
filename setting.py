@@ -68,7 +68,14 @@ def getListImage(str_image, width, height, color, numbers):  # lấy danh sách 
 
 def check_btn_click(mouse_pos, button): # kiểm tra xem chuột có click vào nút không
     return button.x <= mouse_pos[0] <= button.x + button.width and button.y <= mouse_pos[1] <= button.y + button.height
+pygame.mixer.init()
+# Define the folder containing sounds
+sound_folder = path.join(path.dirname(__file__), 'sounds')
 
+# Load sounds
+shoot_sound = pygame.mixer.Sound(path.join(sound_folder, 'TiengSung.wav'))  # Shooting sound
 
+# Adjust volume if needed
+shoot_sound.set_volume(0.5)
 
 
