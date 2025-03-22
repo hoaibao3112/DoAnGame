@@ -18,6 +18,7 @@ class mainGUI:
 
     def addControls(self):
         x = 160
+
         center_x = (self.screen.get_width() - 200) // 2
         center_y = (self.screen.get_height() - 50) // 2
 
@@ -26,7 +27,8 @@ class mainGUI:
         self.pvp_Button = Button(self.screen, center_x, center_y + x + 70, 200, 50, SILVER, BLACK, 3, "2 PLAYERS")
         self.ranked_Button = Button(self.screen, center_x, center_y + x + 140, 200, 50, SILVER, BLACK, 3, "RANKED MODE")
         self.button_quit = Button(self.screen, center_x, center_y + x + 210, 200, 50, SILVER, BLACK, 4, "QUIT")
-
+        self.vuot_man_button = Button(self.screen, (self.screen.get_width(
+        ) - 200) // 2, (self.screen.get_height() - 50) // 2 + x - 70, 200, 50, SILVER, BLACK, 3, "Vuot man WORLD")
     def quit(self):
         pygame.quit()
         quit()
@@ -38,6 +40,7 @@ class mainGUI:
         self.pvp_Button.draw()
         self.ranked_Button.draw()
         self.button_quit.draw()
+        self.vuot_man_button.draw()
 
     def addEvents(self):
         for event in pygame.event.get():
@@ -48,14 +51,16 @@ class mainGUI:
                 mouse_pos = pygame.mouse.get_pos()
                 if check_btn_click(mouse_pos, self.button_quit):
                     self.quit()
-                if check_btn_click(mouse_pos, self.zombie_Button):
+                elif check_btn_click(mouse_pos, self.zombie_Button):
                     self.current_display = mode_zombie(self.screen)
-                if check_btn_click(mouse_pos, self.training_Button):
+                elif check_btn_click(mouse_pos, self.training_Button):
                     self.current_display = mode_training(self.screen)
-                if check_btn_click(mouse_pos, self.pvp_Button):
+                elif check_btn_click(mouse_pos, self.pvp_Button):
                     self.current_display = mode_1v1(self.screen)
-                if check_btn_click(mouse_pos, self.ranked_Button):
+                elif check_btn_click(mouse_pos, self.ranked_Button):
                     self.current_display = mode_Ranked(self.screen)
+                elif check_btn_click(mouse_pos, self.button_setting):
+                    self.current_display = mode_vuot_man(self.screen)                
 
     def run(self):
         self.run = True

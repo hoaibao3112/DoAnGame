@@ -33,7 +33,7 @@ class button_setting: # class nút setting
         self.height = height
         self.x = x
         self.y = y
-        self.image = pygame.image.load(r'img\setting.png')
+        self.image = pygame.image.load(r'img/setting.png')
         self.image = pygame.transform.scale(
             self.image, (100, 100))  # Chỉnh kích thước hình ảnh nếu cần
         # Hiển thị ở góc trên cùng bên phải
