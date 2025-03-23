@@ -1,5 +1,6 @@
 import random
 import pygame
+import sys
 
 from Button import button_setting
 from auto_respawn import *
@@ -8,7 +9,7 @@ from pauseGUI import pauseGUI
 from setting import *
 from show_kill import show_kill
 from sprites import *
-
+from wave_cleared_GUI import WaveClearedGUI
 
 class game:
     def __init__(self,screen):
@@ -213,7 +214,8 @@ class mode_zombie(game): #chế độ zombie
     def get_elapsed_time(self):
      elapsed_time = (pygame.time.get_ticks() - self.start_time) // 1000  # Tính thời gian đã trôi qua (giây)
      return elapsed_time
- #---------------- chế độ ranked------------
+    
+#---------------- chế độ ranked------------
 class mode_Ranked(game):
     def __init__(self, screen):
         super().__init__(screen)
@@ -257,3 +259,142 @@ class mode_Ranked(game):
     def update(self):
         super().update()
         self.check_level_completion()
+
+class mode_vuot_man(game): #chế độ vượt màn
+    def __init__(self, screen):
+        self.current_wave = 1
+        self.zombies_per_wave = 5  # Starting number of zombies
+        self.wave_cleared = False
+        self.waiting_for_next_wave = False
+        self.log_entries = []  # Store log entries
+        super().__init__(screen)
+        self.new()
+        self.log(f"Game started - Wave {self.current_wave} with {self.zombies_per_wave} zombies")
+        self.run()
+
+    def data(self):
+        super().data()
+        self.auto_respawn_zombie = auto_respawn_zombie_with_quantity(self, 0.7, self.zombies_per_wave)
+        self.zombies_in_wave = []  # Track zombies in current wave
+
+    def AddedItems(self):
+        super().AddedItems()
+        self.game_over_screen = gameOverGUI(self.screen)
+        self.wave_cleared_screen = WaveClearedGUI(self.screen, self.current_wave)  # New screen for wave transitions
+    
+    def log(self, message, level="INFO"):
+        """
+        Log game events with timestamp and current wave information
+        
+        Parameters:
+            message (str): The message to log
+            level (str): Log level (INFO, WARNING, ERROR)
+        """
+        current_time = pygame.time.get_ticks() // 1000  # Time in seconds
+        formatted_time = f"{current_time // 60:02d}:{current_time % 60:02d}"
+        
+        # Add player stats if available
+        player_stats = ""
+        if PLAYER:
+            kills = GameStatistics.number_kill_player1
+            player_stats = f" | Kills: {kills}"
+        
+        # Create formatted log entry
+        log_entry = f"[{formatted_time}] [{level}] Wave {self.current_wave}: {message}{player_stats}"
+        
+        # Print to console
+        print(log_entry)
+        
+        # Store log entry for possible display or saving
+        self.log_entries.append(log_entry)
+        
+        # Limit log size
+        if len(self.log_entries) > 100:
+            self.log_entries.pop(0)
+    
+    def auto_respawn(self):
+        # Only spawn zombies if not waiting between waves
+        if not self.waiting_for_next_wave and not self.wave_cleared:
+            # Track all zombies spawned
+            new_zombies = self.auto_respawn_zombie.respawn()
+            if new_zombies:
+                self.zombies_in_wave.extend(new_zombies)
+                self.waiting_for_next_wave = True  # Stop spawning after wave is created
+                self.log(f"Spawned {len(new_zombies)} zombies, total in wave: {len(self.zombies_in_wave)}")
+    
+    def check_wave_status(self):
+        # Check if all zombies in the current wave are dead
+        if self.zombies_in_wave and all(zombie.alive == False for zombie in self.zombies_in_wave):
+            self.wave_cleared = True
+            self.log(f"Wave {self.current_wave} cleared!")
+            self.show_wave_cleared_screen()
+    
+    def show_wave_cleared_screen(self):
+        self.pausing = True
+        self.wave_cleared_screen.update_wave(self.current_wave)
+        self.wave_cleared_screen.run()
+        self.check_clear_wave_events(self.wave_cleared_screen)
+    
+    def start_next_wave(self):
+        self.zombies_in_wave = []
+        self.wave_cleared = False
+        self.current_wave += 1
+        self.zombies_per_wave += 2  # Increase zombies per wave
+        self.auto_respawn_zombie.spawn_count = self.zombies_per_wave
+        self.waiting_for_next_wave = False
+        self.pausing = False
+        self.log(f"Starting wave {self.current_wave} with {self.zombies_per_wave} zombies")
+    
+    def update(self):
+        super().update()
+        self.check_wave_status()
+    
+    def pause_game(self):
+        if self.pausing == True:
+            self.pause_screen.run()
+            self.clock.tick(FPS)
+            self.check_pause_events(self.pause_screen)
+        if not PLAYER: #nếu player chết thì dừng game
+            self.pausing = True
+            self.game_over_screen.run()
+            self.check_pause_events(self.game_over_screen)
+
+    def new(self):
+        super().new()
+        GameStatistics.bulletRate = 0.5
+        GameStatistics.bulletSpeed = 1000
+        for row, tiles in enumerate(self.maze):
+            for col, tile in enumerate(tiles):
+                if tile == '1':
+                    wall(self, col, row)
+                if tile == '*':
+                    self.player1 = Player1(self, col, row)
+    
+    def get_elapsed_time(self):
+        elapsed_time = (pygame.time.get_ticks() - self.start_time) // 1000  # Tính thời gian đã trôi qua (giây)
+        return elapsed_time
+        
+    def check_clear_wave_events(self, pause_screen):
+        if pause_screen == None or pause_screen.action == None:
+            return
+        if pause_screen.action == 1:
+            self.start_next_wave()
+    def check_pause_events(self,pause_screen): #kiểm tra sự kiện của màn hình pause
+        if pause_screen == None or pause_screen.action == None: 
+            return
+        if pause_screen.action == 1: #tiếp tục
+            return
+        if pause_screen.action == 0: #thoát
+            self.playing = False
+        if pause_screen.action == 2: #restart
+            self.new()
+            self.zombies_in_wave = []
+            self.wave_cleared = False
+            self.current_wave = 1
+            self.zombies_per_wave = 5  # Increase zombies per wave
+            self.auto_respawn_zombie.spawn_count = self.zombies_per_wave
+            self.waiting_for_next_wave = False
+            self.pausing = False
+            self.log(f"Starting wave {self.current_wave} with {self.zombies_per_wave} zombies")
+            pause_screen.action = None
+                  

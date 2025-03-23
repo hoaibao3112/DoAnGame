@@ -60,3 +60,25 @@ class auto_respawn_zombie(auto_respawn): # respawn cho zombie
             return
         self.last_enemy_spawn_time = 0
         Zombie(self.game, pos_respawn_random[0], pos_respawn_random[1])
+
+class auto_respawn_zombie_with_quantity(auto_respawn): # respawn cho zombie
+    def __init__(self, game, respawn_time, spawn_count=1):
+        super().__init__(game, respawn_time)
+        self.last_enemy_spawn_time = 0
+        self.spawn_count = spawn_count  # Number of zombies to spawn each time
+        
+    def respawn(self): # respawn cho zombie
+        self.last_enemy_spawn_time += self.game.changing_time
+        if self.last_enemy_spawn_time < self.respawn_time:
+            return None
+        
+        self.last_enemy_spawn_time = 0
+        spawned_zombies = []
+        
+        # Spawn the specified number of zombies
+        for _ in range(self.spawn_count):
+            pos_respawn_random = random.choice(self.pos_respawn)
+            zombie = Zombie(self.game, pos_respawn_random[0], pos_respawn_random[1])
+            spawned_zombies.append(zombie)
+            
+        return spawned_zombies

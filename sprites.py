@@ -450,13 +450,15 @@ class TankEnemy(enemy): # class TankEnemy
         super().ability()
         self.shoot()
 
-class Zombie(enemy):  
+class Zombie(enemy):
+    alive = True
     def __init__(self, game, x, y):
         super().__init__(game, x, y, getImage(ZOMBIE_IMAGE, WHITE))
 
     def collide_with_bullet(self):  # Xử lý va chạm đạn và zombie
         for bullet in self.game.bullets:
             if bullet.rect.colliderect(self.hit_rect):
+                self.alive = False
                 zombie_hit_sound.play()  # Phát âm thanh khi trúng zombie
                 bullet.kill()
                 Explosion(self.game, bullet.rect.center)
