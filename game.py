@@ -10,7 +10,7 @@ from setting import *
 from show_kill import show_kill
 from sprites import *
 from wave_cleared_GUI import WaveClearedGUI
-
+from garageGUI import load_data
 class game:
     def __init__(self,screen):
         self.screen = screen
@@ -161,7 +161,9 @@ class mode_1v1(game): #chế độ 1v1
                 if tile == '1':
                     wall(self, col, row)
                 if tile == '*':
-                    self.player1 = Player1(self, col, row)
+                    data = load_data()
+                    selected_tank = data.get("selected_tank", "Basic Tank")
+                    self.player1 = Player1(self, col, row, selected_tank)
                 if tile == '-':
                     self.player2 = Player2(self, col, row)
     
@@ -210,7 +212,10 @@ class mode_zombie(game): #chế độ zombie
                 if tile == '1':
                     wall(self, col, row)
                 if tile == '*':
+                    data = load_data()
+                    selected_tank= data.get("selected_tank","Basic Tank")
                     self.player1 = Player1(self, col, row)
+
     def get_elapsed_time(self):
      elapsed_time = (pygame.time.get_ticks() - self.start_time) // 1000  # Tính thời gian đã trôi qua (giây)
      return elapsed_time
@@ -368,7 +373,9 @@ class mode_vuot_man(game): #chế độ vượt màn
                 if tile == '1':
                     wall(self, col, row)
                 if tile == '*':
-                    self.player1 = Player1(self, col, row)
+                    data = load_data()
+                    selected_tank = data.get("selected_tank", "Basic Tank")
+                    self.player1 = Player1(self, col, row, selected_tank)
     
     def get_elapsed_time(self):
         elapsed_time = (pygame.time.get_ticks() - self.start_time) // 1000  # Tính thời gian đã trôi qua (giây)

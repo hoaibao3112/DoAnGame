@@ -6,6 +6,8 @@ from auto_target import AutoTargeting
 from setting import *
 from sprites import *
 from setting import shoot_sound 
+from setting import TANKS
+from garageGUI import load_data
  # Import âm thanh nổ
 vector = pygame.math.Vector2  # tạo biến vector2
 
@@ -130,8 +132,11 @@ def shoot(self):  # Hàm bắn đạn
 # -----------------------------------------------------------------------------------
 class Player1(Player):
     def __init__(self, game, x, y):
-        super().__init__(game, x, y, getImage(PLAYER_IMAGE1, WHITE))  # gọi class cha
+        data = load_data()
+        selected_tank = data.get("selected_tank", "Basic Tank")  # Lấy xe đã chọn hoặc mặc định là Basic Tank
+        tank_image = getImage(TANKS[selected_tank]["image"], WHITE)  # Load hình ảnh của xe đã chọn
 
+        super().__init__(game, x, y, tank_image)  # Gọi hàm khởi tạo của lớp cha
     def keys(self): 
         super().keys()
         keys_state = pygame.key.get_pressed()  # lấy giá trị boolean của tất cả các phím

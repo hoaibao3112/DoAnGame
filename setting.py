@@ -21,12 +21,19 @@ HEIGHT = 800
 FPS = 60
 TITLE = 'TANK TROUBLE'
 BGCOLOR = WHITE
-
+TANKS = {
+    "Basic Tank": {"cost": 500, "image": "tank1.png"},
+    "Armor Tank": {"cost": 1000, "image": "tank2.png"},
+    "Speed Tank": {"cost": 800, "image": "tank3.png"},
+    "Heavy Tank": {"cost": 1500, "image": "tank4.png"},
+    "Sniper Tank": {"cost": 1200, "image": "tank5.png"},
+    "Flame Tank": {"cost": 1800, "image": "tank6.png"}
+}
 SQSIZE = 32  # KÍCH THƯỚC 1 Ô LƯỚI TRONG GAME
 GRIDWIDTH = WIDTH/SQSIZE  # SỐ Ô THEO CHIỀU RỘNG
 GRIDHEIGHT = HEIGHT/SQSIZE  # SỐ Ô THEO CHIỀU CAO
 
-playerSpeed = 200 # tốc độ di chuyển của player
+playerSpeed = 75 # tốc độ di chuyển của player
 
 WALL_IMAGE = 'dirt.png'  # hình tường
 PLAYER_IMAGE1 = 'tank1.png'  # hình player1
@@ -39,7 +46,7 @@ player_box = pygame.Rect(0, 0, 32, 32)
 bullet_box = pygame.Rect(0, 0, 10, 10)
 
 # shooting setting
-bulletSpeed = 500 # tốc độ đạn
+bulletSpeed = 200 # tốc độ đạn
 bullet_rate = 1 # khoảng cách bắn 1 viên đạn là 1 giây
 turret = vector(0, 30)  # vị trí đạn xuất hiện
 
@@ -77,7 +84,8 @@ shoot_sound = pygame.mixer.Sound(path.join(sound_folder, 'TiengSung.wav'))  # Sh
 # Âm thanh khi bắn trúng Zombie
 zombie_hit_sound = pygame.mixer.Sound(path.join(sound_folder, 'VuNo.wav'))
 zombie_hit_sound.set_volume(0.5)  # Điều chỉnh âm lượng
-
+button_click_sound = pygame.mixer.Sound(path.join(sound_folder, 'An.wav'))
+button_click_sound.set_volume(0.5)  # Điều chỉnh âm lượng nếu cần
 # Adjust volume if needed
 shoot_sound.set_volume(0.5)
 bg_music = pygame.mixer.Sound(path.join(sound_folder, 'NhacNen.wav'))
