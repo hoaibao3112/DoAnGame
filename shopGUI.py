@@ -55,7 +55,7 @@ class ShopGUI:
         title = self.font.render("CỬA HÀNG MUA XE", True, (0, 0, 0))
         self.screen.blit(title, (self.screen.get_width() // 2 - title.get_width() // 2, 50))
         
-        coin_text = self.font.render(f"\U0001F4B0 Tiền: {data['player_coins']}", True, (0, 0, 0))
+        coin_text = self.font.render(f" Tiền: {data['player_coins']}", True, (0, 0, 0))
         self.screen.blit(coin_text, (20, 20))
         
         tank_name = self.tank_list[self.selected_index]

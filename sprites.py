@@ -8,7 +8,8 @@ from sprites import *
 from setting import shoot_sound 
 from setting import TANKS
 from garageGUI import load_data
- # Import âm thanh nổ
+import json
+from pygame.sprite import Sprite
 vector = pygame.math.Vector2  # tạo biến vector2
 
 PLAYER = []
@@ -197,10 +198,17 @@ class Player1(Player):
                     self.kill()
                     PLAYER.remove(self)
 
-    def update(self): # hàm update của sprite
-        self.collide_with_player()
-        super().update()
-
+    def collide_with_enemy(self):
+      for enemy in ENEMY:
+        if self.hit_rect.colliderect(enemy.hit_rect):  # Nếu quái chạm vào xe
+            game_over_sound.play()  # Phát âm thanh thua cuộc
+            self.kill()  # Xóa xe
+            enemy.kill()  # Xóa quái vật
+    def update(self):  # Hàm update của sprite
+     self.collide_with_enemy()  # Kiểm tra va chạm với quái vật
+     self.collide_with_player()  # Kiểm tra va chạm với người chơi
+     super().update()  # Gọi update của lớp cha
+        
 # -----------------------------------------------------------------------------------
 
 
@@ -257,6 +265,8 @@ class Player2(Player):
                 
                 self.kill()  # Gọi kill() sau khi đã remove
                 break  # Thoát vòng lặp sau khi xử lý va chạm
+
+
 
 # -----------------------------------------------------------------------------------
 
@@ -467,6 +477,74 @@ class Zombie(enemy):
                 zombie_hit_sound.play()  # Phát âm thanh khi trúng zombie
                 bullet.kill()
                 Explosion(self.game, bullet.rect.center)
+                self.game.gold_manager.drop_gold(self.rect.x, self.rect.y)  # Gọi drop_gold
+                self.kill()
                 self.kill()
                 ENEMY.remove(self)
                 GameStatistics.number_kill_player1 += 1
+
+class Gold(Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.image.load("img/gold.png")  # Đảm bảo có ảnh vàng
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x, y)
+        self.amount = random.randint(10, 50)  # Giá trị vàng ngẫu nhiên
+
+class Player(Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.image.load("player.png")  # Đảm bảo có ảnh người chơi
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x, y)
+        self.speed = 5
+
+    def move(self, keys):
+        if keys[pygame.K_LEFT]:
+            self.rect.x -= self.speed
+        if keys[pygame.K_RIGHT]:
+            self.rect.x += self.speed
+        if keys[pygame.K_UP]:
+            self.rect.y -= self.speed
+        if keys[pygame.K_DOWN]:
+            self.rect.y += self.speed
+
+# class GoldDropManager:
+#     def __init__(self, game):
+#         self.game = game
+#         self.gold_list = []  # Danh sách vàng rơi
+#         self.gold_drop_rate = 0.3  # Xác suất rơi vàng khi tiêu diệt quái vật (30%)
+
+#     def drop_gold(self, x, y):
+#         """Tạo vàng tại vị trí (x, y) nếu điều kiện rơi vàng được thỏa mãn."""
+#         if random.random() < self.gold_drop_rate:
+#             gold = Gold(x, y)
+#             self.gold_list.append(gold)
+#             self.game.all_sprites.add(gold)
+#             print(f"Vàng xuất hiện tại ({x}, {y})")
+
+#     def check_gold_pickup(self):
+#      player = self.game.player1  # Lấy đối tượng người chơi
+#      for gold in self.gold_list[:]:  # Duyệt qua danh sách vàng
+#         if player.rect.colliderect(gold.rect):  # Kiểm tra va chạm# Phát âm thanh nhặt vàng
+#             self.add_gold_to_save_data(gold.amount)  # Cộng tiền vào file JSON
+#             self.gold_list.remove(gold)  # Xóa vàng khỏi danh sách
+#             gold.kill()  # Xóa vàng khỏi màn hình
+#             print(f"Người chơi đã nhặt {gold.amount} vàng!")
+
+#     def add_gold_to_save_data(self, amount):
+#         """Cập nhật số vàng vào file save_data.json."""
+#         try:
+#             with open("save_data.json", "r") as f:
+#                 data = json.load(f)
+#         except (FileNotFoundError, json.JSONDecodeError):
+#             data = {"gold": 0}
+
+#         data["gold"] = data.get("gold", 0) + amount
+
+#         with open("save_data.json", "w") as f:
+#             json.dump(data, f, indent=4)
+
+#         print(f"Người chơi nhận được {amount} vàng! Tổng vàng: {data['gold']}")
+              
+

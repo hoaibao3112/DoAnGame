@@ -30,3 +30,4 @@ def calculate_rotation_angle(target, position): #tính góc quay
         if dx < 0:
             angle_degrees = 360 - angle_degrees
         return angle_degrees
+    

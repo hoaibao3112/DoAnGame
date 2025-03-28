@@ -38,6 +38,8 @@ class auto_respawn_tank(auto_respawn): # respawn cho tank
         pos_respawn_random = random.choice(self.pos_respawn)
         self.game.player2 = Player2(self.game, pos_respawn_random[0], pos_respawn_random[1])
         GameStatistics.death_time_player2 = None
+    
+    
 
     def respawn_TankEnemy(self): # respawn cho enemy
         if GameStatistics.death_time_enemy == None:

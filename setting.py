@@ -1,5 +1,6 @@
 from os import path
 import pygame
+import random
 
 
 vector = pygame.math.Vector2
@@ -25,8 +26,8 @@ TANKS = {
     "Basic Tank": {"cost": 500, "image": "tank1.png"},
     "Armor Tank": {"cost": 1000, "image": "tank2.png"},
     "Speed Tank": {"cost": 800, "image": "tank3.png"},
-    "Heavy Tank": {"cost": 1500, "image": "tank4.png"},
-    "Sniper Tank": {"cost": 1200, "image": "tank5.png"},
+    "Heavy Tank": {"cost": 1500, "image": "tank7.png"},
+    "Sniper Tank": {"cost": 1200, "image": "tank8.png"},
     "Flame Tank": {"cost": 1800, "image": "tank6.png"}
 }
 SQSIZE = 32  # KÍCH THƯỚC 1 Ô LƯỚI TRONG GAME
@@ -36,7 +37,8 @@ GRIDHEIGHT = HEIGHT/SQSIZE  # SỐ Ô THEO CHIỀU CAO
 playerSpeed = 75 # tốc độ di chuyển của player
 
 WALL_IMAGE = 'dirt.png'  # hình tường
-PLAYER_IMAGE1 = 'tank1.png'  # hình player1
+PLAYER_IMAGE1 = 'tank1.png'
+PLAYER_IMAGE3 = 'tank1.png' # hình player1
 PLAYER_IMAGE2 = 'tank2.jpg'  # hình player2
 BULLET_IMAGE = 'BULLET.png'  # hình đạn
 ZOMBIE_IMAGE = 'zombie.png'  # hình zombie
@@ -44,7 +46,11 @@ BOSS_IMAGE = 'boss.png'  # hình boss
 
 player_box = pygame.Rect(0, 0, 32, 32)
 bullet_box = pygame.Rect(0, 0, 10, 10)
+# Tạo danh sách hình ảnh tường có sẵn
+WALL_IMAGES = ['wall1.png', 'wall2.png', 'wall3.png', 'wall5.png']
 
+# Chọn ngẫu nhiên một hình ảnh làm tường
+WALL_IMAGE = random.choice(WALL_IMAGES)
 # shooting setting
 bulletSpeed = 200 # tốc độ đạn
 bullet_rate = 1 # khoảng cách bắn 1 viên đạn là 1 giây
@@ -88,6 +94,9 @@ button_click_sound = pygame.mixer.Sound(path.join(sound_folder, 'An.wav'))
 button_click_sound.set_volume(0.5)  # Điều chỉnh âm lượng nếu cần
 # Adjust volume if needed
 shoot_sound.set_volume(0.5)
-bg_music = pygame.mixer.Sound(path.join(sound_folder, 'NhacNen.wav'))
+bg_music = pygame.mixer.Sound(path.join(sound_folder, 'NhacNen1.wav'))
 bg_music.set_volume(0.3)  # Điều chỉnh âm lượng
-
+game_over_sound = pygame.mixer.Sound(path.join(sound_folder, 'gameOver.wav'))
+game_over_sound.set_volume(0.5)  # Điều chỉnh âm lượng
+gold_pickup_sound = pygame.mixer.Sound(path.join(sound_folder, 'Vang.wav'))
+gold_pickup_sound.set_volume(1.0)  # Điều chỉnh âm lượng nếu cần

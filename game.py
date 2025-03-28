@@ -1,7 +1,8 @@
 import random
 import pygame
 import sys
-
+import json
+import os
 from Button import button_setting
 from auto_respawn import *
 from gameOverGUI import gameOverGUI
@@ -11,15 +12,25 @@ from show_kill import show_kill
 from sprites import *
 from wave_cleared_GUI import WaveClearedGUI
 from garageGUI import load_data
+from gold_drop import GoldDropManager
+
 class game:
     def __init__(self,screen):
         self.screen = screen
         self.clock = pygame.time.Clock()
         self.clock.tick(FPS)
+        self.gold_list = []
         pygame.display.set_caption(TITLE)
         self.data()
         self.AddedItems()
         self.start_time = pygame.time.get_ticks()
+        self.font = pygame.font.Font(None, 36)  # Chọn font mặc định, cỡ 36
+        self.gold_amount = 0  # Khởi tạo số vàng
+        
+    def update(self):
+        super().update()
+        self.gold_manager.check_gold_pickup()  # Kiểm tra nhặt vàng
+        
     def data(self):
         self.maze = []  # ma trận
         i=random.randint(1,5) # chọn ngẫu nhiên 1 trong 5 ma trận 
@@ -29,7 +40,19 @@ class game:
         self.pausing = False
         self.playing = True
         self.respawn = auto_respawn_tank(self, 3)
+        
+        
+    def spawn_gold(self, position, amount):
+        self.gold_list.append(Gold(self, position, amount))
+    
+    def check_collect_gold(self, player):
+        for gold in self.gold_list:
+            if player.rect.colliderect(gold.rect):
+                player.money += gold.amount  # Cộng tiền ngay vào ví
+                self.gold_list.remove(gold)
+                self.update_save_data()  # Cập nhật file save
 
+        
     def AddedItems(self): #thêm giao diện vào game
         self.btn_setting=button_setting(self.screen, WIDTH - 75, -20, 100, 100)
         self.pause_screen = pauseGUI(self.screen)
@@ -125,16 +148,18 @@ class mode_training(game): #chế độ huấn luyện
         self.run()
 
     def new(self):
-        super().new()
-        for row, tiles in enumerate(self.maze):
-            for col, tile in enumerate(tiles):
-                if tile == '1':
-                    wall(self, col, row) #tạo tường
-                if tile == '*':
-                    self.player1 = Player1(self, col, row) #tạo player1
-                if tile == '-':
-                    self.enemy = TankEnemy(self, col, row) #tạo enemy
-    
+     super().new()
+     global WALL_IMAGE  
+     WALL_IMAGE = random.choice(WALL_IMAGES)  # Chọn hình ảnh tường ngẫu nhiên
+
+     for row, tiles in enumerate(self.maze):
+        for col, tile in enumerate(tiles):
+            if tile == '1':
+                wall(self, col, row)  # Tạo tường với hình ảnh đã chọn
+            elif tile == '*':
+                self.player1 = Player1(self, col, row)  # Tạo player1
+            elif tile == '-':
+                self.enemy = TankEnemy(self, col, row)  # Tạo enemy
     def auto_respawn(self): #hồi sinh
         self.respawn.respawn_player1()
         self.respawn.respawn_TankEnemy()
@@ -147,9 +172,8 @@ class mode_training(game): #chế độ huấn luyện
         super().draw()
         self.show_kill_player2.draw(GameStatistics.number_kill_player2,RED) #vẽ số lần giết của player2
 
-class mode_1v1(game): #chế độ 1v1
-
-    def __init__(self,screen):
+class mode_1v1(game):  # Chế độ 1v1
+    def __init__(self, screen):
         super().__init__(screen)
         self.new()
         self.run()
@@ -160,30 +184,46 @@ class mode_1v1(game): #chế độ 1v1
             for col, tile in enumerate(tiles):
                 if tile == '1':
                     wall(self, col, row)
-                if tile == '*':
-                    data = load_data()
-                    selected_tank = data.get("selected_tank", "Basic Tank")
-                    self.player1 = Player1(self, col, row, selected_tank)
-                if tile == '-':
+                if tile == '*':  # Người chơi 1
+                    self.player1 = Player1(self, col, row)  
+                if tile == '-':  # Người chơi 2
                     self.player2 = Player2(self, col, row)
-    
+
     def AddedItems(self):
         super().AddedItems()
-        self.show_kill_player2 = show_kill(self.screen, "right")
-    
+        self.show_kill_player1 = show_kill(self.screen, "left")  # Hiển thị kill của Player 3
+        self.show_kill_player2 = show_kill(self.screen, "right") # Hiển thị kill của Player 2
+
     def draw(self):
         super().draw()
-        self.show_kill_player2.draw(GameStatistics.number_kill_player2,RED) 
+        self.show_kill_player1.draw(GameStatistics.number_kill_player1, BLUE)  
+        self.show_kill_player2.draw(GameStatistics.number_kill_player2, RED)   
 
     def auto_respawn(self):
+        """ Tự động hồi sinh cả hai người chơi """
         self.respawn.respawn_player1()
         self.respawn.respawn_player2()
 
-class mode_zombie(game): #chế độ zombie
-    def __init__(self,screen):
+        
+  
+class mode_zombie(game):  # Chế độ zombie
+    def __init__(self, screen):
         super().__init__(screen)
-        self.new()
-        self.run()
+        self.gold_manager = GoldDropManager(self)  # Quản lý vàng rơi
+        self.all_sprites = pygame.sprite.Group()
+        self.zombies = pygame.sprite.Group()  # Nhóm chứa quái vật
+
+        self.new()  # Khởi tạo game
+        self.run()  # Chạy vòng lặp game
+
+    def draw(self):
+        super().draw()  # Vẽ các thành phần khác
+        for gold in self.gold_manager.gold_list:
+            self.screen.blit(gold.image, gold.rect)  # Vẽ vàng rơi
+
+    def zombie_killed(self, enemy):
+        if enemy:  # Kiểm tra enemy hợp lệ
+            self.gold_manager.drop_gold(enemy.rect.x, enemy.rect.y)
 
     def data(self):
         super().data()
@@ -202,7 +242,11 @@ class mode_zombie(game): #chế độ zombie
             self.pausing = True
             self.game_over_screen.run()
             self.check_pause_events(self.game_over_screen)
-
+            
+    def update(self):
+        super().update()
+        self.gold_manager.check_gold_pickup()  # Kiểm tra nhặt vàng
+        
     def new(self):
         super().new()
         GameStatistics.bulletRate = 0.5
@@ -219,6 +263,32 @@ class mode_zombie(game): #chế độ zombie
     def get_elapsed_time(self):
      elapsed_time = (pygame.time.get_ticks() - self.start_time) // 1000  # Tính thời gian đã trôi qua (giây)
      return elapsed_time
+    
+def update_save_data(self, gold_amount):
+    save_path = os.path.join(os.path.dirname(__file__), 'save_data.json')
+
+    # Kiểm tra xem file tồn tại không, nếu không thì tạo dữ liệu mặc định
+    if os.path.exists(save_path):
+        try:
+            with open(save_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+        except (json.JSONDecodeError, IOError):
+            data = {"player_coins": 0, "garage_tanks": [], "selected_tank": ""}
+    else:
+        data = {"player_coins": 0, "garage_tanks": [], "selected_tank": ""}
+    
+    # Cập nhật số tiền
+    data["player_coins"] = data.get("player_coins", 0) + gold_amount
+    data["player_coins"] = data.get("player_coins", 0) + gold_amount
+
+    # Ghi lại dữ liệu vào file
+    try:
+        with open(save_path, 'w', encoding='utf-8') as f:
+         print(f"Nhặt vàng! Số tiền hiện tại: {data['player_coins']}")  # Debugging
+    except IOError:
+         print("Lỗi: Không thể ghi dữ liệu vào save_data.json")
+
+             
     
 #---------------- chế độ ranked------------
 class mode_Ranked(game):
@@ -404,4 +474,4 @@ class mode_vuot_man(game): #chế độ vượt màn
             self.pausing = False
             self.log(f"Starting wave {self.current_wave} with {self.zombies_per_wave} zombies")
             pause_screen.action = None
-                  
+#----------------------------------------------------------------------------------

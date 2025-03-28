@@ -7,9 +7,11 @@ class GameStatistics:
     bulletSpeed = 500 #tốc độ của đạn
     bulletRate = 1 #tốc độ bắn
 
+
     def reset_kill(): #reset số lần giết
         GameStatistics.number_kill_player1 = 0 
         GameStatistics.number_kill_player2 = 0
+
 
     def reset_bullet(): #reset tốc độ đạn
         GameStatistics.bulletSpeed = 500
