@@ -13,7 +13,8 @@ from sprites import *
 from wave_cleared_GUI import WaveClearedGUI
 from garageGUI import load_data
 from gold_drop import GoldDropManager
-
+from snowflake import Snowflake
+from Airplane import Airplane
 class game:
     def __init__(self,screen):
         self.screen = screen
@@ -26,7 +27,15 @@ class game:
         self.start_time = pygame.time.get_ticks()
         self.font = pygame.font.Font(None, 36)  # Chọn font mặc định, cỡ 36
         self.gold_amount = 0  # Khởi tạo số vàng
-        
+        self.bg_color = random.choice(RANDOM_COLORS)  # Chọn màu nền ngẫu nhiên
+        self.PLAYER = []  # Khởi tạo danh sách người chơi
+         # Hiệu ứng tuyết rơi
+        self.snowflakes = pygame.sprite.Group()
+        if self.bg_color == LIGHT_BLUE:  # Nếu màu nền là LIGHT_BLUE
+            for _ in range(100):  # Tạo 100 bông tuyết
+                snowflake = Snowflake(WIDTH, HEIGHT)
+                self.snowflakes.add(snowflake)
+                
     def update(self):
         super().update()
         self.gold_manager.check_gold_pickup()  # Kiểm tra nhặt vàng
@@ -97,7 +106,7 @@ class game:
             pygame.draw.line(self.screen, BLACK, (0, y), (WIDTH, y))
 
     def draw(self): #vẽ các đối tượng lên màn hình
-        self.screen.fill(DARK_SEA_GREEN) #tô màu màn hình
+        self.screen.fill(self.bg_color)  # Sử dụng màu nền đã chọn
         # self.grid() #vẽ lưới
         self.all_sprites.draw(self.screen) #vẽ tất cả các sprites
         self.btn_setting.draw() #vẽ nút setting
@@ -107,6 +116,9 @@ class game:
         elapsed_time = self.get_elapsed_time()
         time_text = font.render(f"Time: {elapsed_time}s", True, (255, 0, 0))
         self.screen.blit(time_text, (WIDTH // 2 - 50, 20))  # Đặt vị trí hiển thị
+        # Vẽ hiệu ứng tuyết rơi
+        if self.bg_color == LIGHT_BLUE:
+            self.snowflakes.draw(self.screen)
         
     def update_draw(self): #cập nhật và vẽ các đối tượng
         self.draw() 
@@ -114,6 +126,8 @@ class game:
 
     def update(self): #cập nhật tất cả các sprites
         self.all_sprites.update()
+        if self.bg_color == LIGHT_BLUE:
+            self.snowflakes.update()  # Cập nhật vị trí của các bông tuyết
 
     def check_pause_events(self,pause_screen): #kiểm tra sự kiện của màn hình pause
         if pause_screen == None or pause_screen.action == None: 
@@ -175,37 +189,249 @@ class mode_training(game): #chế độ huấn luyện
 class mode_1v1(game):  # Chế độ 1v1
     def __init__(self, screen):
         super().__init__(screen)
+        self.last_airplane_time = 0  # Thời gian lần cuối máy bay xuất hiện
+        self.airplane_count = 0 
+        self.spawn_airplane# Đếm số lần máy bay xuất hiện
         self.new()
         self.run()
+    def spawn_airplane(self):
+     current_time = pygame.time.get_ticks() / 1000  # Lấy thời gian hiện tại (giây)
+     if self.airplane_count < 2 and current_time - self.last_airplane_time > 10:  # Máy bay xuất hiện mỗi 10 giây
+        airplane = Airplane(self)
+        self.all_sprites.add(airplane)  # Thêm máy bay vào nhóm all_sprites
+        self.last_airplane_time = current_time
+        self.airplane_count += 1  # Tăng số lần máy bay xuất hiện
+        
+        
+    def show_game_over(self, losing_player):
+        self.pausing = True
+        font = pygame.font.SysFont(None, 80)
+        if losing_player == "Player 1":
+            text = font.render("Player 2 Wins!", True, BLUE)
+        else:
+            text = font.render("Player 1 Wins!", True, RED)
 
+        text_rect = text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+        self.screen.blit(text, text_rect)
+        pygame.display.flip()
+        pygame.time.wait(2000)  # Dừng màn hình trong 3 giây
+        self.playing = False  # Kết thúc trò chơi
+        
+    def addEvents(self):
+     self.action = None
+     for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            self.quit()
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            mouse_pos = pygame.mouse.get_pos()
+            if self.continue_Button.rect.collidepoint(mouse_pos):
+                self.action = 1  # Tiếp tục
+            elif self.exit_button.rect.collidepoint(mouse_pos):
+                self.action = 0  # Thoát
+            elif self.restart_button_Setting.rect.collidepoint(mouse_pos):
+                self.action = 2  # Restart
     def new(self):
         super().new()
+        if not hasattr(self, 'PLAYER'):  # Kiểm tra nếu thuộc tính chưa được khởi tạo
+            self.PLAYER = []
+        # Tăng thời gian giữa các lần bắn chỉ trong chế độ 1v1
+        GameStatistics.bulletRate = 3 # Thời gian giữa các lần bắn là 1.5 giây
+        # Khởi tạo người chơi và tường
         for row, tiles in enumerate(self.maze):
             for col, tile in enumerate(tiles):
-                if tile == '1':
-                    wall(self, col, row)
+                if tile == '1':  # Nếu ô là tường
+                    wall(self, col, row)  # Tạo đối tượng tường
                 if tile == '*':  # Người chơi 1
-                    self.player1 = Player1(self, col, row)  
+                    player1 = Player1_1v1(self, col, row)
+                    self.PLAYER.append(player1)  # Thêm người chơi vào danh sách
                 if tile == '-':  # Người chơi 2
-                    self.player2 = Player2(self, col, row)
+                    player2 = Player2_1v1(self, col, row)
+                    self.PLAYER.append(player2)  # Thêm người chơi vào danh sách
+    def pause_game(self):
+        if self.pausing:  # Nếu trò chơi đang tạm dừng
+            self.pause_screen.run()  # Hiển thị màn hình tạm dừng
+            self.clock.tick(FPS)  # Đặt lại thời gian
+            self.check_pause_events(self.pause_screen)  # Kiểm tra sự kiện của màn hình tạm dừng
+    def events(self):
+     for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            self.quit()
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            mouse_pos = pygame.mouse.get_pos()
+            if check_btn_click(mouse_pos, self.btn_setting):  # Kiểm tra nếu nhấn nút tạm dừng
+                self.pausing = True
+    def check_pause_events(self, pause_screen):
+        if pause_screen is None or pause_screen.action is None:
+            return
+        if pause_screen.action == 1:  # Tiếp tục
+            self.pausing = False
+        elif pause_screen.action == 0:  # Thoát
+            self.playing = False
+        elif pause_screen.action == 2:  # Chơi lại
+            self.new()
+            pause_screen.action = None       
+    def update(self):
+        super().update()
+        self.spawn_airplane()
+        self.all_sprites.update()  # Cập nhật tất cả các sprite# Gọi phương thức tạo máy bay
+    def draw_health_bar(self, x, y, health, max_health, color):
+        BAR_WIDTH = 200
+        BAR_HEIGHT = 20
+        fill = (health / max_health) * BAR_WIDTH
+        outline_rect = pygame.Rect(x, y, BAR_WIDTH, BAR_HEIGHT)
+        fill_rect = pygame.Rect(x, y, fill, BAR_HEIGHT)
+        pygame.draw.rect(self.screen, color, fill_rect)
+        pygame.draw.rect(self.screen, WHITE, outline_rect, 2)  # Viền trắng
 
-    def AddedItems(self):
-        super().AddedItems()
-        self.show_kill_player1 = show_kill(self.screen, "left")  # Hiển thị kill của Player 3
-        self.show_kill_player2 = show_kill(self.screen, "right") # Hiển thị kill của Player 2
-
+    def check_bullet_collision(self):
+     for bullet in self.game.bullets:
+        for player in self.game.PLAYER:
+            if bullet.rect.colliderect(player.rect):  # Kiểm tra va chạm giữa đạn và người chơi
+                # Đảm bảo đạn của Player1 không gây sát thương lên chính Player1 và ngược lại
+                if (bullet.type == 'player1' and isinstance(player, Player2_1v1)) or \
+                   (bullet.type == 'player2' and isinstance(player, Player1_1v1)):
+                    player.take_damage(bullet.damage)  # Giảm máu của người chơi
+                    bullet.kill()  # Xóa đạn sau khi va chạm
     def draw(self):
-        super().draw()
-        self.show_kill_player1.draw(GameStatistics.number_kill_player1, BLUE)  
-        self.show_kill_player2.draw(GameStatistics.number_kill_player2, RED)   
+     self.screen.fill(self.bg_color)  # Làm mới màn hình
+     self.all_sprites.draw(self.screen)  # Vẽ tất cả các sprite
+     self.btn_setting.draw()  # Vẽ nút tạm dừng
+     pygame.display.flip()  # Cập nhật màn hình
+     if len(self.PLAYER) > 0:
+        self.draw_health_bar(50, 50, self.PLAYER[0].health, 1000, RED)
 
-    def auto_respawn(self):
-        """ Tự động hồi sinh cả hai người chơi """
-        self.respawn.respawn_player1()
-        self.respawn.respawn_player2()
+    # Hiển thị thanh máu của Player2
+     if len(self.PLAYER) > 1:
+        self.draw_health_bar(WIDTH - 250, 50, self.PLAYER[1].health, 1000, BLUE)
 
-        
-  
+        pygame.display.flip()  # Cập nhật màn hình
+    def draw_health_bar(self, x, y, health, max_health, color):
+     BAR_WIDTH = 200  # Chiều rộng thanh máu
+     BAR_HEIGHT = 20  # Chiều cao thanh máu
+     fill = (health / max_health) * BAR_WIDTH  # Tính phần trăm máu còn lại
+     outline_rect = pygame.Rect(x, y, BAR_WIDTH, BAR_HEIGHT)  # Viền thanh máu
+     fill_rect = pygame.Rect(x, y, fill, BAR_HEIGHT)  # Phần máu còn lại
+     pygame.draw.rect(self.screen, color, fill_rect)  # Vẽ phần máu
+     pygame.draw.rect(self.screen, WHITE, outline_rect, 2)  # Vẽ viền trắng
+class Player1_1v1(Player1):
+    def __init__(self, game, x, y):
+        super().__init__(game, x, y)
+        self.health = 1000  # Máu ban đầu
+        self.damage = 20  # Sát thương ban đầu (thấp)
+        self.bullet_speed = 50  # Tốc độ đạn ban đầu (chậm)
+
+    def take_damage(self, amount):
+        self.health -= amount  # Giảm máu
+        if self.health <= 0:  # Nếu máu <= 0
+            self.health = 0  # Đảm bảo máu không âm
+            self.game.show_game_over("Player 2")  # Hiển thị thông báo Player 2 thắng
+
+
+    def update(self):
+        self.collide_with_bullet1vs1()  # Kiểm tra va chạm với đạn
+        self.shoot()  # Gọi phương thức bắn đạn
+        super().update()  # Gọi update của lớp cha
+
+
+    def shoot(self):
+     if self.is_shoot:
+        self.last_fire += self.game.changing_time
+        if self.last_fire > GameStatistics.bulletRate:  # Kiểm tra thời gian giữa các lần bắn
+            self.last_fire = 0
+            direction = vector(0, 1).rotate(-self.rot).normalize()
+            position = self.position + turret.rotate(-self.rot)
+            Bullet_1vs1(self.game, position.x, position.y, direction, 'player1', self.damage, self.bullet_speed)
+            shoot_sound.play()  # Phát âm thanh bắn súng
+
+    def collide_with_bullet1vs1(self):
+        for bullet in self.game.bullets:
+            if bullet.rect.colliderect(self.hit_rect):  # Kiểm tra va chạm giữa đạn và người chơi
+                if bullet.type != 'player1':  # Đảm bảo đạn không phải của chính người chơi
+                    Explosion(self.game, self.rect.center)  # Tạo vụ nổ tại vị trí xe
+                    self.take_damage(bullet.damage)  # Giảm máu
+                    bullet.kill()  # Xóa đạn
+
+
+class Player2_1v1(Player2):
+    def __init__(self, game, x, y):
+        super().__init__(game, x, y)
+        self.health = 1000  # Máu ban đầu
+        self.damage = 20  # Sát thương ban đầu (thấp)
+        self.bullet_speed = 50  # Tốc độ đạn ban đầu (chậm)
+    def take_damage(self, amount):
+        self.health -= amount  # Giảm máu
+        if self.health <= 0:  # Nếu máu <= 0
+            self.health = 0  # Đảm bảo máu không âm
+            self.game.show_game_over("Player 1")  # Hiển thị thông báo Player 1 thắng
+    def shoot(self):
+     if self.is_shoot:
+        self.last_fire += self.game.changing_time
+        if self.last_fire > GameStatistics.bulletRate:  # Kiểm tra thời gian giữa các lần bắn
+            self.last_fire = 0
+            direction = vector(0, 1).rotate(-self.rot).normalize()
+            position = self.position + turret.rotate(-self.rot)
+            Bullet_1vs1(self.game, position.x, position.y, direction, 'player2', self.damage, self.bullet_speed)
+            shoot_sound.play()  # Phát âm thanh bắn súng
+               
+    def collide_with_bullet1vs1(self):
+        for bullet in self.game.bullets:
+            if bullet.rect.colliderect(self.hit_rect):  # Kiểm tra va chạm giữa đạn và người chơi
+                if bullet.type != 'player2':  # Đảm bảo đạn không phải của chính người chơi
+                    Explosion(self.game, self.rect.center)  # Tạo vụ nổ tại vị trí xe
+                    self.take_damage(bullet.damage)  # Giảm máu
+                    bullet.kill()  # Xóa đạn
+    def draw_health_bar(self, x, y, health, max_health, color):
+      BAR_WIDTH = 200
+      BAR_HEIGHT = 20
+      fill = (health / max_health) * BAR_WIDTH
+      outline_rect = pygame.Rect(x, y, BAR_WIDTH, BAR_HEIGHT)
+      fill_rect = pygame.Rect(x, y, fill, BAR_HEIGHT)
+      pygame.draw.rect(self.screen, color, fill_rect)
+      pygame.draw.rect(self.screen, WHITE, outline_rect, 2)  # Viền trắng
+      
+     
+    def update(self):
+        self.collide_with_bullet1vs1()  # Kiểm tra va chạm với đạn
+        self.shoot()  # Gọi phương thức bắn đạn
+        super().update()  # Gọi update của lớp cha
+    def shoot(self):
+     if self.is_shoot:
+        self.last_fire += self.game.changing_time
+        if self.last_fire > GameStatistics.bulletRate:  # Kiểm tra thời gian giữa các lần bắn
+            self.last_fire = 0
+            direction = vector(0, 1).rotate(-self.rot).normalize()
+            position = self.position + turret.rotate(-self.rot)
+            Bullet_1vs1(self.game, position.x, position.y, direction, 'player2', self.damage, self.bullet_speed)
+            shoot_sound.play()  # Phát âm thanh bắn súng
+               
+class Bullet_1vs1(pygame.sprite.Sprite):
+    def __init__(self, game, x, y, direction, bullet_type, damage, speed):
+        super().__init__(game.all_sprites, game.bullets)
+        self.game = game
+        self.image = pygame.image.load(BULLET_IMAGE).convert_alpha()  # Tải hình ảnh viên đạn
+        self.image.set_colorkey((255, 255, 255))  # Loại bỏ màu trắng (RGB: 255, 255, 255)
+        self.rect = self.image.get_rect()
+        self.position = pygame.math.Vector2(x, y)  # Sử dụng vector để lưu vị trí
+        self.rect.center = self.position
+        self.speed = speed  # Tốc độ đạn
+        self.damage = damage  # Sát thương của đạn
+        self.direction = direction
+        self.type = bullet_type  # Loại đạn (player1, player2, enemy)
+
+
+    def update(self):
+        # Di chuyển đạn
+        self.position += self.direction * self.speed * self.game.changing_time
+        self.rect.center = self.position
+
+        # Kiểm tra va chạm với tường
+        if pygame.sprite.spritecollideany(self, self.game.walls):
+            Explosion(self.game, self.rect.center)  # Tạo vụ nổ tại vị trí va chạm
+            self.kill()  # Xóa đạn
+
+        # Kiểm tra nếu đạn ra khỏi màn hình
+        if self.rect.right < 0 or self.rect.left > WIDTH or self.rect.top > HEIGHT or self.rect.bottom < 0:
+            self.kill()
 class mode_zombie(game):  # Chế độ zombie
     def __init__(self, screen):
         super().__init__(screen)
@@ -474,4 +700,8 @@ class mode_vuot_man(game): #chế độ vượt màn
             self.pausing = False
             self.log(f"Starting wave {self.current_wave} with {self.zombies_per_wave} zombies")
             pause_screen.action = None
-#----------------------------------------------------------------------------------
+#-------------------------chế độ 1 vss 1---------------------------------------------------------
+
+    
+    
+    

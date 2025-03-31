@@ -9,7 +9,7 @@ from setting import shoot_sound
 from setting import TANKS
 from garageGUI import load_data
 import json
-from pygame.sprite import Sprite
+from pygame.sprite import Sprite 
 vector = pygame.math.Vector2  # tạo biến vector2
 
 PLAYER = []
@@ -48,7 +48,7 @@ class Player(pygame.sprite.Sprite):
 
     def collide_with_bullet(self): # va chạm với đạn
         pass
-
+    
     def change_rot(self): # hàm xoay hình ảnh của xe theo hướng của target
         self.auto_targeting()
         if self.rot == None:
@@ -303,7 +303,27 @@ class Bullet(pygame.sprite.Sprite):
         self.move()
         self.despawn()
 
+#----------------------chế độ 1vs1------------------
+class Bullet_1vs1(pygame.sprite.Sprite):
+    def __init__(self, game, x, y, direction, bullet_type):
+        super().__init__(game.all_sprites, game.bullets)
+        self.game = game
+        self.image = pygame.image.load(BULLET_IMAGE).convert_alpha()
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        self.speed = 500  # Tốc độ đạn
+        self.damage = 100  # Sát thương của đạn
+        self.direction = direction
+        self.type = bullet_type  # Loại đạn (player1, player2, enemy)
 
+    def update(self):
+        # Logic di chuyển đạn
+        self.rect.x += self.direction.x * self.speed * self.game.changing_time
+        self.rect.y += self.direction.y * self.speed * self.game.changing_time
+
+        # Kiểm tra nếu đạn ra khỏi màn hình
+        if self.rect.right < 0 or self.rect.left > WIDTH or self.rect.top > HEIGHT or self.rect.bottom < 0:
+            self.kill()
 # -----------------------------------------------------------------------------------
 class Explosion(pygame.sprite.Sprite): # class vụ nổ
     def __init__(self, game, center):
@@ -344,7 +364,25 @@ class wall(pygame.sprite.Sprite): # class tường
         self.y = y
         self.rect.x = x * SQSIZE
         self.rect.y = y * SQSIZE
+class Bullet_1vs1(pygame.sprite.Sprite):
+    def __init__(self, game, x, y, direction):
+        super().__init__(game.all_sprites, game.bullets)
+        self.game = game
+        self.image = pygame.image.load(BULLET_IMAGE).convert_alpha()
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        self.speed = 500  # Tốc độ đạn
+        self.damage = 10  # Sát thương của đạn
+        self.direction = direction
 
+    def update(self):
+        # Logic di chuyển đạn
+        self.rect.x += self.direction.x * self.speed * self.game.changing_time
+        self.rect.y += self.direction.y * self.speed * self.game.changing_time
+
+        # Kiểm tra nếu đạn ra khỏi màn hình
+        if self.rect.right < 0 or self.rect.left > WIDTH or self.rect.top > HEIGHT or self.rect.bottom < 0:
+            self.kill()
 
 # -----------------------------------------------------------------------------------
 class enemy(pygame.sprite.Sprite): # class enemy
@@ -509,42 +547,5 @@ class Player(Sprite):
         if keys[pygame.K_DOWN]:
             self.rect.y += self.speed
 
-# class GoldDropManager:
-#     def __init__(self, game):
-#         self.game = game
-#         self.gold_list = []  # Danh sách vàng rơi
-#         self.gold_drop_rate = 0.3  # Xác suất rơi vàng khi tiêu diệt quái vật (30%)
-
-#     def drop_gold(self, x, y):
-#         """Tạo vàng tại vị trí (x, y) nếu điều kiện rơi vàng được thỏa mãn."""
-#         if random.random() < self.gold_drop_rate:
-#             gold = Gold(x, y)
-#             self.gold_list.append(gold)
-#             self.game.all_sprites.add(gold)
-#             print(f"Vàng xuất hiện tại ({x}, {y})")
-
-#     def check_gold_pickup(self):
-#      player = self.game.player1  # Lấy đối tượng người chơi
-#      for gold in self.gold_list[:]:  # Duyệt qua danh sách vàng
-#         if player.rect.colliderect(gold.rect):  # Kiểm tra va chạm# Phát âm thanh nhặt vàng
-#             self.add_gold_to_save_data(gold.amount)  # Cộng tiền vào file JSON
-#             self.gold_list.remove(gold)  # Xóa vàng khỏi danh sách
-#             gold.kill()  # Xóa vàng khỏi màn hình
-#             print(f"Người chơi đã nhặt {gold.amount} vàng!")
-
-#     def add_gold_to_save_data(self, amount):
-#         """Cập nhật số vàng vào file save_data.json."""
-#         try:
-#             with open("save_data.json", "r") as f:
-#                 data = json.load(f)
-#         except (FileNotFoundError, json.JSONDecodeError):
-#             data = {"gold": 0}
-
-#         data["gold"] = data.get("gold", 0) + amount
-
-#         with open("save_data.json", "w") as f:
-#             json.dump(data, f, indent=4)
-
-#         print(f"Người chơi nhận được {amount} vàng! Tổng vàng: {data['gold']}")
-              
+#------------------Hiệu Ung máy bay 
 

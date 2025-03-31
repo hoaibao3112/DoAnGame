@@ -15,6 +15,7 @@ class auto_respawn: # respawn cho tank và zombie
                 for col, tile in enumerate(tiles):  
                     if tile == '?':  # nơi sinh ra
                         self.pos_respawn.append((col, row))
+ 
 class auto_respawn_tank(auto_respawn): # respawn cho tank
     def __init__(self, game, respawn_time):
         super().__init__(game, respawn_time)

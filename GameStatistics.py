@@ -4,7 +4,7 @@ class GameStatistics:
     death_time_player1 = None #thời gian chết của player1
     death_time_player2 = None #thời gian chết của player2
     death_time_enemy = None #thời gian chết của enemy
-    bulletSpeed = 500 #tốc độ của đạn
+    bulletSpeed = 300 #tốc độ của đạn
     bulletRate = 1 #tốc độ bắn
 
 

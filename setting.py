@@ -21,7 +21,10 @@ WIDTH = 1280
 HEIGHT = 800
 FPS = 60
 TITLE = 'TANK TROUBLE'
-BGCOLOR = WHITE
+LIGHT_BLUE = (173, 216, 230)  # Xanh nhạt
+LIGHT_YELLOW = (255, 255, 204)  # Vàng nhạt
+OFF_WHITE = (255, 250, 240)  # Vàng trắng
+RANDOM_COLORS = [LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE]
 TANKS = {
     "Basic Tank": {"cost": 500, "image": "tank1.png"},
     "Armor Tank": {"cost": 1000, "image": "tank2.png"},
@@ -40,7 +43,9 @@ WALL_IMAGE = 'dirt.png'  # hình tường
 PLAYER_IMAGE1 = 'tank1.png'
 PLAYER_IMAGE3 = 'tank1.png' # hình player1
 PLAYER_IMAGE2 = 'tank2.jpg'  # hình player2
-BULLET_IMAGE = 'BULLET.png'  # hình đạn
+folder_of_game = path.dirname(__file__) # tạo đường dẫn đến thư mục chứa tệp chỉ định
+image_folder = path.join(folder_of_game, 'img') # kết hợp thành đường dẫn đến thư mục img trong folder chứa tệp đang chạy
+BULLET_IMAGE = path.join(image_folder, 'BULLET.png')
 ZOMBIE_IMAGE = 'zombie.png'  # hình zombie
 BOSS_IMAGE = 'boss.png'  # hình boss
 
@@ -99,4 +104,4 @@ bg_music.set_volume(0.3)  # Điều chỉnh âm lượng
 game_over_sound = pygame.mixer.Sound(path.join(sound_folder, 'gameOver.wav'))
 game_over_sound.set_volume(0.5)  # Điều chỉnh âm lượng
 gold_pickup_sound = pygame.mixer.Sound(path.join(sound_folder, 'Vang.wav'))
-gold_pickup_sound.set_volume(1.0)  # Điều chỉnh âm lượng nếu cần
+gold_pickup_sound.set_volume(0.5)  # Điều chỉnh âm lượng nếu cần
