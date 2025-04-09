@@ -1,7 +1,7 @@
 import pygame
 from Button import Button
 from setting import *
-
+import vuot_man_GUI 
 class WaveClearedGUI:
     def __init__(self, screen, wave_number):
         self.screen = screen
@@ -15,6 +15,15 @@ class WaveClearedGUI:
         self.continue_button = Button(self.screen, (self.screen.get_width() - 200) // 2, 
                                 (self.screen.get_height() - 50) // 2 + 100, 200, 50, SILVER,
                                 BLACK, 3, "CONTINUE")
+        
+        self.back_button = Button(
+        self.screen,
+        (self.screen.get_width() - 200) // 2,
+        (self.screen.get_height() - 50) // 2 + 180,
+        200, 50,
+        SILVER, BLACK, 3,
+        "BACK TO MENU"
+        )
     
     def update_wave(self, wave_number):
         self.wave_number = wave_number
@@ -34,6 +43,7 @@ class WaveClearedGUI:
         
         # Draw continue button
         self.continue_button.draw()
+        self.back_button.draw()
     
     def addEvents(self):
         self.action = None
@@ -45,6 +55,9 @@ class WaveClearedGUI:
                 if check_btn_click(mouse_pos, self.continue_button):
                     self.running = False
                     self.action = 1  # Continue to next wave
+                elif check_btn_click(mouse_pos, self.back_button):
+                    self.running = False
+                    self.action = 2  # Back to main menu
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
                     self.running = False
@@ -61,3 +74,5 @@ class WaveClearedGUI:
             self.addEvents()
             self.draw()
             pygame.display.flip()
+        
+       

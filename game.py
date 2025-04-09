@@ -15,6 +15,7 @@ from garageGUI import load_data
 from gold_drop import GoldDropManager
 from snowflake import Snowflake
 from Airplane import Airplane
+from vuot_man_GUI import main2GUI
 class game:
     def __init__(self,screen):
         self.screen = screen
@@ -562,9 +563,14 @@ class mode_Ranked(game):
         self.check_level_completion()
 
 class mode_vuot_man(game): #chế độ vượt màn
-    def __init__(self, screen):
-        self.current_wave = 1
-        self.zombies_per_wave = 5  # Starting number of zombies
+    def __init__(self, screen, current_wave, zombies_per_wave):
+
+        self.current_wave = current_wave
+        self.zombies_per_wave = zombies_per_wave
+
+        self.gold_manager = GoldDropManager(self)
+        # self.current_wave = 1
+        # self.zombies_per_wave = 5  # Starting number of zombies
         self.wave_cleared = False
         self.waiting_for_next_wave = False
         self.log_entries = []  # Store log entries
@@ -628,6 +634,7 @@ class mode_vuot_man(game): #chế độ vượt màn
         if self.zombies_in_wave and all(zombie.alive == False for zombie in self.zombies_in_wave):
             self.wave_cleared = True
             self.log(f"Wave {self.current_wave} cleared!")
+            self.completed_wave = self.current_wave
             self.show_wave_cleared_screen()
     
     def show_wave_cleared_screen(self):
@@ -642,10 +649,12 @@ class mode_vuot_man(game): #chế độ vượt màn
         self.current_wave += 1
         self.zombies_per_wave += 2  # Increase zombies per wave
         self.auto_respawn_zombie.spawn_count = self.zombies_per_wave
+        
         self.waiting_for_next_wave = False
         self.pausing = False
         self.log(f"Starting wave {self.current_wave} with {self.zombies_per_wave} zombies")
-    
+
+        return 
     def update(self):
         super().update()
         self.check_wave_status()
@@ -671,7 +680,8 @@ class mode_vuot_man(game): #chế độ vượt màn
                 if tile == '*':
                     data = load_data()
                     selected_tank = data.get("selected_tank", "Basic Tank")
-                    self.player1 = Player1(self, col, row, selected_tank)
+                    # self.player1 = Player1(self, col, row, selected_tank)
+                    self.player1 = Player1(self, col, row)
     
     def get_elapsed_time(self):
         elapsed_time = (pygame.time.get_ticks() - self.start_time) // 1000  # Tính thời gian đã trôi qua (giây)
@@ -680,8 +690,23 @@ class mode_vuot_man(game): #chế độ vượt màn
     def check_clear_wave_events(self, pause_screen):
         if pause_screen == None or pause_screen.action == None:
             return
+        
+        
+
         if pause_screen.action == 1:
             self.start_next_wave()
+            self.playing = False
+
+        if pause_screen.action == 2:
+            
+            self.playing = False
+            self.running = False
+            self.pausing = False
+            gui = main2GUI(self.screen, self.completed_wave)  # truyền biến completed_wave để giữ tiến độ
+            gui.run()
+        
+            
+
     def check_pause_events(self,pause_screen): #kiểm tra sự kiện của màn hình pause
         if pause_screen == None or pause_screen.action == None: 
             return
@@ -701,7 +726,3 @@ class mode_vuot_man(game): #chế độ vượt màn
             self.log(f"Starting wave {self.current_wave} with {self.zombies_per_wave} zombies")
             pause_screen.action = None
 #-------------------------chế độ 1 vss 1---------------------------------------------------------
-
-    
-    
-    
