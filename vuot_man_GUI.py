@@ -1,14 +1,19 @@
 import pygame
 from Button import Button
 # from game import mode_vuot_man
-import  game 
+import game 
 from setting import *
-from garageGUI import GarageGUI
+from garageGUI import GarageGUI, load_data
 from shopGUI import ShopGUI
-class main2GUI:
-    def __init__(self, screen=None, completed_wave=0):
+
+class vuot_man_GUI:
+    def __init__(self, screen=None):
         pygame.init()
-        self.completed_wave = completed_wave
+        self.running = True
+
+        data = load_data()
+        self.completed_wave = data.get("completed_wave", 0)
+
         self.icon = pygame.image.load(r'img/logo.png')
         self.background = pygame.image.load(r'img/background.png')
         self.background = pygame.transform.scale(self.background, (WIDTH, HEIGHT))
@@ -30,22 +35,47 @@ class main2GUI:
         total_width = 3 * button_width + 2 * spacing_x
         start_x = (WIDTH - total_width) // 2
         start_y = 200
-
-        # Thay vì dùng vòng lặp for, tạo mỗi nút riêng biệt
-        # self.level_buttons = []
-
-        # Tạo nút LV1 đến LV9
-        self.level_buttons1= Button(self.screen, start_x, start_y, button_width, button_height, SILVER, BLACK, 3, "LV1")
-        self.level_buttons2= Button(self.screen, start_x + button_width + spacing_x, start_y, button_width, button_height, SILVER, BLACK, 3, "LV2")
-        self.level_buttons3= Button(self.screen, start_x + 2 * (button_width + spacing_x), start_y, button_width, button_height, SILVER, BLACK, 3, "LV3")
         
-        self.level_buttons4= Button(self.screen, start_x, start_y + button_height + spacing_y, button_width, button_height, SILVER, BLACK, 3, "LV4")
-        self.level_buttons5= Button(self.screen, start_x + button_width + spacing_x, start_y + button_height + spacing_y, button_width, button_height, SILVER, BLACK, 3, "LV5")
-        self.level_buttons6= Button(self.screen, start_x + 2 * (button_width + spacing_x), start_y + button_height + spacing_y, button_width, button_height, SILVER, BLACK, 3, "LV6")
+        # Màu cho các nút đã mở khóa (SILVER) và chưa mở khóa (DARK_GRAY)
+        UNLOCKED_COLOR = SILVER
+        LOCKED_COLOR = (100, 100, 100)  # Màu xám tối hơn cho các nút chưa mở khóa
+
+        # Hàm để xác định màu của nút dựa trên level
+        def get_button_color(level):
+            if level == 1 or (self.completed_wave and level <= self.completed_wave + 1):
+                return UNLOCKED_COLOR
+            else:
+                return LOCKED_COLOR
+
+        # Tạo nút LV1 đến LV9 với màu tương ứng
+        self.level_buttons1 = Button(self.screen, start_x, start_y, button_width, button_height, 
+                                    get_button_color(1), BLACK, 3, "LV1")
+        self.level_buttons2 = Button(self.screen, start_x + button_width + spacing_x, start_y, button_width, button_height, 
+                                    get_button_color(2), BLACK, 3, "LV2")
+        self.level_buttons3 = Button(self.screen, start_x + 2 * (button_width + spacing_x), start_y, button_width, button_height, 
+                                    get_button_color(3), BLACK, 3, "LV3")
         
-        self.level_buttons7= Button(self.screen, start_x, start_y + 2 * (button_height + spacing_y), button_width, button_height, SILVER, BLACK, 3, "LV7")
-        self.level_buttons8= Button(self.screen, start_x + button_width + spacing_x, start_y + 2 * (button_height + spacing_y), button_width, button_height, SILVER, BLACK, 3, "LV8")
-        self.level_buttons9= Button(self.screen, start_x + 2 * (button_width + spacing_x), start_y + 2 * (button_height + spacing_y), button_width, button_height, SILVER, BLACK, 3, "LV9")
+        self.level_buttons4 = Button(self.screen, start_x, start_y + button_height + spacing_y, button_width, button_height, 
+                                    get_button_color(4), BLACK, 3, "LV4")
+        self.level_buttons5 = Button(self.screen, start_x + button_width + spacing_x, start_y + button_height + spacing_y, button_width, button_height, 
+                                    get_button_color(5), BLACK, 3, "LV5")
+        self.level_buttons6 = Button(self.screen, start_x + 2 * (button_width + spacing_x), start_y + button_height + spacing_y, button_width, button_height, 
+                                    get_button_color(6), BLACK, 3, "LV6")
+        
+        self.level_buttons7 = Button(self.screen, start_x, start_y + 2 * (button_height + spacing_y), button_width, button_height, 
+                                    get_button_color(7), BLACK, 3, "LV7")
+        self.level_buttons8 = Button(self.screen, start_x + button_width + spacing_x, start_y + 2 * (button_height + spacing_y), button_width, button_height, 
+                                    get_button_color(8), BLACK, 3, "LV8")
+        self.level_buttons9 = Button(self.screen, start_x + 2 * (button_width + spacing_x), start_y + 2 * (button_height + spacing_y), button_width, button_height, 
+                                    get_button_color(9), BLACK, 3, "LV9")
+        
+        # Thêm nút Back to Menu
+        back_button_width = 200
+        back_button_height = 50
+        back_button_x = (WIDTH - back_button_width) // 2  # Đặt ở giữa màn hình theo chiều ngang
+        back_button_y = start_y + 3 * (button_height + spacing_y) + 30  # Đặt bên dưới các nút level
+        self.back_button = Button(self.screen, back_button_x, back_button_y, back_button_width, back_button_height, 
+                                 RED, WHITE, 4, "BACK TO MENU")
 
     def quit(self):
         pygame.quit()
@@ -64,6 +94,7 @@ class main2GUI:
         self.level_buttons7.draw()
         self.level_buttons8.draw()
         self.level_buttons9.draw()
+        self.back_button.draw()  # Vẽ nút Back to Menu
 
     def addEvents(self):
         for event in pygame.event.get():
@@ -73,8 +104,12 @@ class main2GUI:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 self.button_sound.play()
                 mouse_pos = pygame.mouse.get_pos()
-               
                 
+                # Kiểm tra nếu nhấn vào nút Back to Menu
+                if check_btn_click(mouse_pos, self.back_button):
+                    self.run = False  # Thoát khỏi vòng lặp hiện tại
+                    return  # Quay về mainGUI
+               
                 def handle_wave(wave_number, zombie_count):
                     if wave_number == 1 or (self.completed_wave and wave_number <= self.completed_wave + 1):
                         self.current_display = game.mode_vuot_man(self.screen, wave_number, zombie_count)
@@ -102,7 +137,6 @@ class main2GUI:
                     handle_wave(8, 19)
                 elif check_btn_click(mouse_pos, self.level_buttons9):
                     handle_wave(9, 21)
-                
 
     def run(self):
         self.run = True

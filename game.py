@@ -15,7 +15,7 @@ from garageGUI import load_data
 from gold_drop import GoldDropManager
 from snowflake import Snowflake
 from Airplane import Airplane
-from vuot_man_GUI import main2GUI
+from vuot_man_GUI import vuot_man_GUI
 class game:
     def __init__(self,screen):
         self.screen = screen
@@ -500,9 +500,9 @@ def update_save_data(self, gold_amount):
             with open(save_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
         except (json.JSONDecodeError, IOError):
-            data = {"player_coins": 0, "garage_tanks": [], "selected_tank": ""}
+            data = {"player_coins": 0, "garage_tanks": [], "selected_tank": "", "completed_wave": 0}
     else:
-        data = {"player_coins": 0, "garage_tanks": [], "selected_tank": ""}
+        data = {"player_coins": 0, "garage_tanks": [], "selected_tank": "", "completed_wave": 0}
     
     # Cập nhật số tiền
     data["player_coins"] = data.get("player_coins", 0) + gold_amount
@@ -567,6 +567,9 @@ class mode_vuot_man(game): #chế độ vượt màn
 
         self.current_wave = current_wave
         self.zombies_per_wave = zombies_per_wave
+
+        data = load_data()
+        self.completed_wave = data.get("completed_wave", 0)
 
         self.gold_manager = GoldDropManager(self)
         # self.current_wave = 1
@@ -634,13 +637,15 @@ class mode_vuot_man(game): #chế độ vượt màn
         if self.zombies_in_wave and all(zombie.alive == False for zombie in self.zombies_in_wave):
             self.wave_cleared = True
             self.log(f"Wave {self.current_wave} cleared!")
-            self.completed_wave = self.current_wave
+            if (self.current_wave > self.completed_wave):
+                self.completed_wave = self.current_wave
             self.show_wave_cleared_screen()
     
     def show_wave_cleared_screen(self):
         self.pausing = True
         self.wave_cleared_screen.update_wave(self.current_wave)
         self.wave_cleared_screen.run()
+        update_completed_wave(self.completed_wave)
         self.check_clear_wave_events(self.wave_cleared_screen)
     
     def start_next_wave(self):
@@ -702,7 +707,7 @@ class mode_vuot_man(game): #chế độ vượt màn
             self.playing = False
             self.running = False
             self.pausing = False
-            gui = main2GUI(self.screen, self.completed_wave)  # truyền biến completed_wave để giữ tiến độ
+            gui = vuot_man_GUI(self.screen)  # truyền biến completed_wave để giữ tiến độ
             gui.run()
         
             
@@ -725,4 +730,46 @@ class mode_vuot_man(game): #chế độ vượt màn
             self.pausing = False
             self.log(f"Starting wave {self.current_wave} with {self.zombies_per_wave} zombies")
             pause_screen.action = None
+
+def update_completed_wave(completed_wave):
+    """
+    Cập nhật thông tin về màn chơi đã hoàn thành vào file save_data.json
+    
+    Parameters:
+        completed_wave (int): Số màn chơi đã hoàn thành
+    
+    Returns:
+        bool: True nếu cập nhật thành công, False nếu có lỗi
+    """
+    import os
+    import json
+    
+    save_path = os.path.join(os.path.dirname(__file__), 'save_data.json')
+    
+    # Đọc dữ liệu từ file save
+    if os.path.exists(save_path):
+        try:
+            with open(save_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+        except (json.JSONDecodeError, IOError):
+            data = {"player_coins": 0, "garage_tanks": [], "selected_tank": "", "completed_wave": 0}
+    else:
+        data = {"player_coins": 0, "garage_tanks": [], "selected_tank": "", "completed_wave": 0}
+    
+    # Chỉ cập nhật nếu màn mới cao hơn màn đã lưu
+    current_completed = data.get("completed_wave", 0)
+    if completed_wave > current_completed:
+        data["completed_wave"] = completed_wave
+        print(f"Đã cập nhật màn vượt qua: {completed_wave}")  # Thông báo debug
+        
+        # Ghi lại dữ liệu vào file
+        try:
+            with open(save_path, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=4)
+            return True
+        except IOError:
+            print("Lỗi: Không thể ghi dữ liệu vào save_data.json")
+            return False
+    
+    return True  # Trả về True nếu không cần cập nhật (màn hiện tại thấp hơn hoặc bằng màn đã lưu)
 #-------------------------chế độ 1 vss 1---------------------------------------------------------

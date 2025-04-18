@@ -4,7 +4,7 @@ from game import *
 from setting import *
 from garageGUI import GarageGUI
 from shopGUI import ShopGUI
-from vuot_man_GUI import main2GUI as vuot_man_GUI
+from vuot_man_GUI import vuot_man_GUI
 class mainGUI:
     def __init__(self):
         pygame.init()
@@ -73,7 +73,7 @@ class mainGUI:
                 elif check_btn_click(mouse_pos, self.ranked_Button):
                     self.current_display = mode_Ranked(self.screen)
                 elif check_btn_click(mouse_pos, self.mode_vuot_man):
-                    vuot_man_GUI().run()
+                    vuot_man_GUI(self.screen).run()
                 elif check_btn_click(mouse_pos, self.garage_Button):
                     GarageGUI(self.screen).run()
                 elif check_btn_click(mouse_pos, self.shop_Button):

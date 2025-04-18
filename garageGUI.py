@@ -12,8 +12,8 @@ def load_data():
         with open(SAVE_FILE, "r") as f:
             return json.load(f)
     except FileNotFoundError:
-        return {"player_coins": 0, "garage_tanks": [], "selected_tank": None}
-
+        return {"player_coins": 0, "garage_tanks": [], "selected_tank": None, "completed_wave": 0}
+    
 # Lưu dữ liệu vào file
 def save_data(data):
     with open(SAVE_FILE, "w") as f:

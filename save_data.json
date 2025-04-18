@@ -1,1 +1,13 @@
-{"player_coins": 37428, "garage_tanks": ["Basic Tank", "Flame Tank", "Sniper Tank", "Heavy Tank", "Armor Tank", "Speed Tank"], "selected_tank": "Basic Tank"}
+{
+    "player_coins": 37428,
+    "garage_tanks": [
+        "Basic Tank",
+        "Flame Tank",
+        "Sniper Tank",
+        "Heavy Tank",
+        "Armor Tank",
+        "Speed Tank"
+    ],
+    "selected_tank": "Basic Tank",
+    "completed_wave": 3
+}

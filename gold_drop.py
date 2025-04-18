@@ -43,7 +43,8 @@ class GoldDropManager:
             data = {
                 "player_coins": 0,
                 "garage_tanks": [],
-                "selected_tank": ""
+                "selected_tank": "",
+                "completed_wave": 0,
             }
 
         # Cộng số vàng vào player_coins
