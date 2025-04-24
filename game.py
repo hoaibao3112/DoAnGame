@@ -563,8 +563,9 @@ class mode_Ranked(game):
         self.check_level_completion()
 
 class mode_vuot_man(game): #chế độ vượt màn
-    def __init__(self, screen, current_wave, zombies_per_wave):
+    def __init__(self, screen, current_wave, zombies_per_wave, level_menu=None):
 
+        self.level_menu = level_menu
         self.current_wave = current_wave
         self.zombies_per_wave = zombies_per_wave
 
@@ -572,11 +573,9 @@ class mode_vuot_man(game): #chế độ vượt màn
         self.completed_wave = data.get("completed_wave", 0)
 
         self.gold_manager = GoldDropManager(self)
-        # self.current_wave = 1
-        # self.zombies_per_wave = 5  # Starting number of zombies
         self.wave_cleared = False
         self.waiting_for_next_wave = False
-        self.log_entries = []  # Store log entries
+        self.log_entries = []
         super().__init__(screen)
         self.new()
         self.log(f"Game started - Wave {self.current_wave} with {self.zombies_per_wave} zombies")
@@ -585,7 +584,7 @@ class mode_vuot_man(game): #chế độ vượt màn
     def data(self):
         super().data()
         self.auto_respawn_zombie = auto_respawn_zombie_with_quantity(self, 0.7, self.zombies_per_wave)
-        self.zombies_in_wave = []  # Track zombies in current wave
+        self.zombies_in_wave = []
 
     def AddedItems(self):
         super().AddedItems()
@@ -593,9 +592,7 @@ class mode_vuot_man(game): #chế độ vượt màn
         self.wave_cleared_screen = WaveClearedGUI(self.screen, self.current_wave)  # New screen for wave transitions
     
     def log(self, message, level="INFO"):
-        """
-        Log game events with timestamp and current wave information
-        
+        """        
         Parameters:
             message (str): The message to log
             level (str): Log level (INFO, WARNING, ERROR)
@@ -609,31 +606,24 @@ class mode_vuot_man(game): #chế độ vượt màn
             kills = GameStatistics.number_kill_player1
             player_stats = f" | Kills: {kills}"
         
-        # Create formatted log entry
         log_entry = f"[{formatted_time}] [{level}] Wave {self.current_wave}: {message}{player_stats}"
         
-        # Print to console
         print(log_entry)
         
-        # Store log entry for possible display or saving
         self.log_entries.append(log_entry)
         
-        # Limit log size
         if len(self.log_entries) > 100:
             self.log_entries.pop(0)
     
     def auto_respawn(self):
-        # Only spawn zombies if not waiting between waves
         if not self.waiting_for_next_wave and not self.wave_cleared:
-            # Track all zombies spawned
             new_zombies = self.auto_respawn_zombie.respawn()
             if new_zombies:
                 self.zombies_in_wave.extend(new_zombies)
-                self.waiting_for_next_wave = True  # Stop spawning after wave is created
+                self.waiting_for_next_wave = True
                 self.log(f"Spawned {len(new_zombies)} zombies, total in wave: {len(self.zombies_in_wave)}")
     
     def check_wave_status(self):
-        # Check if all zombies in the current wave are dead
         if self.zombies_in_wave and all(zombie.alive == False for zombie in self.zombies_in_wave):
             self.wave_cleared = True
             self.log(f"Wave {self.current_wave} cleared!")
@@ -696,29 +686,29 @@ class mode_vuot_man(game): #chế độ vượt màn
         if pause_screen == None or pause_screen.action == None:
             return
         
-        
-
         if pause_screen.action == 1:
             self.start_next_wave()
             self.playing = False
 
-        if pause_screen.action == 2:
+        if pause_screen.action == 0:
             
             self.playing = False
             self.running = False
             self.pausing = False
-            gui = vuot_man_GUI(self.screen)  # truyền biến completed_wave để giữ tiến độ
-            gui.run()
-        
-            
+            # gui = vuot_man_GUI(self.screen)
+            # gui.run()           
 
-    def check_pause_events(self,pause_screen): #kiểm tra sự kiện của màn hình pause
+    def check_pause_events(self,pause_screen):
         if pause_screen == None or pause_screen.action == None: 
             return
         if pause_screen.action == 1: #tiếp tục
             return
         if pause_screen.action == 0: #thoát
+            # self.playing = False
             self.playing = False
+            self.running = False
+            # gui = vuot_man_GUI(self.screen)
+            # gui.run()
         if pause_screen.action == 2: #restart
             self.new()
             self.zombies_in_wave = []
@@ -770,6 +760,20 @@ def update_completed_wave(completed_wave):
         except IOError:
             print("Lỗi: Không thể ghi dữ liệu vào save_data.json")
             return False
+        
+    def run(self):  # hàm này để chạy các chế độ game
+        self.playing = True
+        while self.playing:
+            self.pausing=False
+            while self.pausing == False:
+                self.changing_time = self.clock.tick(FPS) / 1000
+                self.events()  
+                self.update()
+                self.update_draw()
+                self.auto_respawn()
+                self.pause_game()
+        return
     
-    return True  # Trả về True nếu không cần cập nhật (màn hiện tại thấp hơn hoặc bằng màn đã lưu)
+    return True
+
 #-------------------------chế độ 1 vss 1---------------------------------------------------------

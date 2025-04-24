@@ -54,16 +54,11 @@ class WaveClearedGUI:
                 mouse_pos = pygame.mouse.get_pos()
                 if check_btn_click(mouse_pos, self.continue_button):
                     self.running = False
-                    self.action = 1  # Continue to next wave
+                    self.action = 1
                 elif check_btn_click(mouse_pos, self.back_button):
                     self.running = False
-                    self.action = 2  # Back to main menu
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN:
-                    self.running = False
-                    self.action = 1
+                    self.action = 0
             
-    
     def quit(self):
         pygame.quit()
         quit()

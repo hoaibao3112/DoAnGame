@@ -73,7 +73,7 @@ class mainGUI:
                 elif check_btn_click(mouse_pos, self.ranked_Button):
                     self.current_display = mode_Ranked(self.screen)
                 elif check_btn_click(mouse_pos, self.mode_vuot_man):
-                    vuot_man_GUI(self.screen).run()
+                    self.current_display = vuot_man_GUI(self.screen)
                 elif check_btn_click(mouse_pos, self.garage_Button):
                     GarageGUI(self.screen).run()
                 elif check_btn_click(mouse_pos, self.shop_Button):
