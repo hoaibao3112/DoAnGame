@@ -1,10 +1,8 @@
 import pygame
 from Button import Button
-# from game import mode_vuot_man
 import game 
+from garageGUI import load_data, save_data
 from setting import *
-from garageGUI import GarageGUI, load_data
-from shopGUI import ShopGUI
 
 class vuot_man_GUI:
     def __init__(self, screen, main_menu=None):
@@ -22,13 +20,51 @@ class vuot_man_GUI:
         self.background = pygame.image.load(r'img/background.png')
         self.background = pygame.transform.scale(self.background, (WIDTH, HEIGHT))
         pygame.display.set_icon(self.icon)
-        # self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         self.current_display = None
-        self.button_sound = pygame.mixer.Sound("sounds/An.wav")  # Âm thanh khi nhấn nút
+        self.button_sound = pygame.mixer.Sound("sounds/An.wav")
+
+        self.show_notification = False
+        self.notification_text = ""
+        self.notification_timer = 0
+        self.notification_duration = 2000 
+        self.notification_font = pygame.font.Font(None, 36)
+        self.notification_color = (255, 0, 0)
+
         self.addControls()
 
         bg_music.play(-1)
         self.run()
+
+    def display_notification(self, message):
+        self.notification_text = message
+        self.show_notification = True
+        self.notification_timer = pygame.time.get_ticks()
+    
+    def update_notification(self):
+        if self.show_notification:
+            current_time = pygame.time.get_ticks()
+            if current_time - self.notification_timer > self.notification_duration:
+                self.show_notification = False
+
+    def draw_notification(self):
+        if self.show_notification:
+            notification_surface = pygame.Surface((WIDTH, 80))
+            notification_surface.set_alpha(200)
+            notification_surface.fill((0, 0, 0))
+            
+            text_surface = self.notification_font.render(self.notification_text, True, self.notification_color)
+            text_rect = text_surface.get_rect(center=(WIDTH // 2, 40))
+            
+            self.screen.blit(notification_surface, (0, 0))
+            self.screen.blit(text_surface, text_rect)
+
+    def save_completed_wave(self):
+        """Save the completed wave to the save file"""
+        data = load_data()
+        if self.completed_wave > data.get("completed_wave", 0):
+            data["completed_wave"] = self.completed_wave
+            save_data(data)
+            print(f"Đã lưu màn chơi hoàn thành: {self.completed_wave}")
 
     def addControls(self):
         button_width = 200
@@ -101,10 +137,20 @@ class vuot_man_GUI:
         self.level_buttons9.draw()
         self.back_button.draw()
 
+        if self.show_notification:
+            self.draw_notification()
+
     def addEvents(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
+                self.save_completed_wave()
+                return
+
+            if event.type == pygame.USEREVENT and event.dict.get("action") == "return_to_menu":
+                self.current_display = None
+                self.save_completed_wave()
+                self.addControls()
                 return
             
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -113,20 +159,17 @@ class vuot_man_GUI:
                 
                 if check_btn_click(mouse_pos, self.back_button):
                     self.running = False
+                    self.save_completed_wave()
                     return 
                
                 def handle_wave(wave_number, zombie_count):
                     if wave_number == 1 or (self.completed_wave and wave_number <= self.completed_wave + 1):
                         self.current_display = game.mode_vuot_man(self.screen, wave_number, zombie_count, self)
-                        # game_instance = game.mode_vuot_man(self.screen, wave_number, zombie_count)
-
-                        # result = game_instance.run()
-
-                        self.completed_wave = self.current_display.completed_wave
-                        
-                        # print(result)
+                        if self.current_display.completed_wave > self.completed_wave:
+                            self.completed_wave = self.current_display.completed_wave
+                            self.save_completed_wave()
                     else:
-                        print(f"⚠️ LV{wave_number} chưa được mở khóa!")
+                        self.display_notification(f"Màn {wave_number} đang khóa!")
 
                 if check_btn_click(mouse_pos, self.level_buttons1):
                     handle_wave(1, 5)
@@ -149,11 +192,24 @@ class vuot_man_GUI:
 
     def run(self):
         self.running = True
+        clock = pygame.time.Clock()
         while self.running:
             if self.current_display:
-                self.current_display.run()
-            self.addEvents()
-            self.draw()
-            pygame.display.flip()
-            
-        # return
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        self.running = False
+                        self.save_completed_wave()
+                        return
+                    if event.type == pygame.USEREVENT and event.dict.get("action") == "return_to_menu":
+                        self.current_display = None
+                        self.save_completed_wave()
+                        self.addControls()
+                
+                if self.current_display:
+                    self.current_display.run()
+            else:
+                self.addEvents()
+                self.update_notification()
+                self.draw()
+                pygame.display.flip()
+                clock.tick(60)

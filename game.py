@@ -562,7 +562,8 @@ class mode_Ranked(game):
         super().update()
         self.check_level_completion()
 
-class mode_vuot_man(game): #chế độ vượt màn
+#---------------- chế độ vượt màn------------
+class mode_vuot_man(game):
     def __init__(self, screen, current_wave, zombies_per_wave, level_menu=None):
 
         self.level_menu = level_menu
@@ -600,7 +601,6 @@ class mode_vuot_man(game): #chế độ vượt màn
         current_time = pygame.time.get_ticks() // 1000  # Time in seconds
         formatted_time = f"{current_time // 60:02d}:{current_time % 60:02d}"
         
-        # Add player stats if available
         player_stats = ""
         if PLAYER:
             kills = GameStatistics.number_kill_player1
@@ -642,7 +642,7 @@ class mode_vuot_man(game): #chế độ vượt màn
         self.zombies_in_wave = []
         self.wave_cleared = False
         self.current_wave += 1
-        self.zombies_per_wave += 2  # Increase zombies per wave
+        self.zombies_per_wave += 2
         self.auto_respawn_zombie.spawn_count = self.zombies_per_wave
         
         self.waiting_for_next_wave = False
@@ -650,8 +650,10 @@ class mode_vuot_man(game): #chế độ vượt màn
         self.log(f"Starting wave {self.current_wave} with {self.zombies_per_wave} zombies")
 
         return 
+    
     def update(self):
         super().update()
+        self.gold_manager.check_gold_pickup()
         self.check_wave_status()
     
     def pause_game(self):
@@ -694,32 +696,43 @@ class mode_vuot_man(game): #chế độ vượt màn
             
             self.playing = False
             self.running = False
-            self.pausing = False
-            # gui = vuot_man_GUI(self.screen)
-            # gui.run()           
+            pygame.event.post(pygame.event.Event(pygame.USEREVENT, {"action": "return_to_menu"}))
+                       
 
     def check_pause_events(self,pause_screen):
         if pause_screen == None or pause_screen.action == None: 
             return
-        if pause_screen.action == 1: #tiếp tục
+        if pause_screen.action == 1:
             return
-        if pause_screen.action == 0: #thoát
-            # self.playing = False
+        if pause_screen.action == 0:
             self.playing = False
             self.running = False
-            # gui = vuot_man_GUI(self.screen)
-            # gui.run()
-        if pause_screen.action == 2: #restart
+            
+            pygame.event.post(pygame.event.Event(pygame.USEREVENT, {"action": "return_to_menu"}))
+
+        if pause_screen.action == 2:
             self.new()
             self.zombies_in_wave = []
             self.wave_cleared = False
             self.current_wave = 1
-            self.zombies_per_wave = 5  # Increase zombies per wave
+            self.zombies_per_wave = 5
             self.auto_respawn_zombie.spawn_count = self.zombies_per_wave
             self.waiting_for_next_wave = False
             self.pausing = False
             self.log(f"Starting wave {self.current_wave} with {self.zombies_per_wave} zombies")
             pause_screen.action = None
+
+    def run(self):
+        self.playing = True
+        while self.playing:
+            self.pausing=False
+            while self.pausing == False:
+                self.changing_time = self.clock.tick(FPS) / 1000
+                self.events()  
+                self.update()
+                self.update_draw()
+                self.auto_respawn()
+                self.pause_game()
 
 def update_completed_wave(completed_wave):
     """
@@ -746,13 +759,11 @@ def update_completed_wave(completed_wave):
     else:
         data = {"player_coins": 0, "garage_tanks": [], "selected_tank": "", "completed_wave": 0}
     
-    # Chỉ cập nhật nếu màn mới cao hơn màn đã lưu
     current_completed = data.get("completed_wave", 0)
     if completed_wave > current_completed:
         data["completed_wave"] = completed_wave
         print(f"Đã cập nhật màn vượt qua: {completed_wave}")  # Thông báo debug
         
-        # Ghi lại dữ liệu vào file
         try:
             with open(save_path, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=4)
@@ -761,19 +772,6 @@ def update_completed_wave(completed_wave):
             print("Lỗi: Không thể ghi dữ liệu vào save_data.json")
             return False
         
-    def run(self):  # hàm này để chạy các chế độ game
-        self.playing = True
-        while self.playing:
-            self.pausing=False
-            while self.pausing == False:
-                self.changing_time = self.clock.tick(FPS) / 1000
-                self.events()  
-                self.update()
-                self.update_draw()
-                self.auto_respawn()
-                self.pause_game()
-        return
-    
     return True
 
 #-------------------------chế độ 1 vss 1---------------------------------------------------------

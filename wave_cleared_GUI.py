@@ -29,19 +29,15 @@ class WaveClearedGUI:
         self.wave_number = wave_number
         
     def draw(self):
-        self.screen.fill((0, 0, 0))  # Black background
         
-        # Wave cleared message
         wave_text = self.font.render(f"WAVE {self.wave_number} CLEARED!", True, (255, 255, 0))
         wave_rect = wave_text.get_rect(center=(self.screen.get_width() // 2, self.screen.get_height() // 3))
         self.screen.blit(wave_text, wave_rect)
         
-        # Next wave info
         next_wave_text = self.small_font.render(f"WAVE {self.wave_number + 1} INCOMING", True, (255, 0, 0))
         next_wave_rect = next_wave_text.get_rect(center=(self.screen.get_width() // 2, self.screen.get_height() // 2))
         self.screen.blit(next_wave_text, next_wave_rect)
         
-        # Draw continue button
         self.continue_button.draw()
         self.back_button.draw()
     
